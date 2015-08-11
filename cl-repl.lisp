@@ -78,14 +78,12 @@
 
 (defun exec-command (x)
   (let ((elt (assoc x *commands*)))
-    (cond (elt
-           (values (apply (second elt)
-                          (if (third elt)
-                              (funcall (third elt))
-                              (read-args)))
-                   t))
-          ((symbolp x)
-           (values (apply x (read-args)) t)))))
+    (when elt
+      (values (apply (second elt)
+                     (if (third elt)
+                         (funcall (third elt))
+                         (read-args)))
+              t))))
 
 (defun one-of (choices)
   (do ((c choices (cdr c))
