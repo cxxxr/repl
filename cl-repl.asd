@@ -6,4 +6,6 @@
 (defsystem cl-repl
            :serial t
            :components ((:file "cl-repl"))
-           :depends-on (:cl-fad :sb-posix))
+           :depends-on (:cl-fad
+                        :sb-posix
+                        :cl-readline))

@@ -1,6 +1,7 @@
 (in-package :cl-repl)
 
 (defparameter *eof-value* (gensym "EOF"))
+(defparameter *backtrace* nil)
 
 (defparameter *commands*
   '((:ld load command-args)
@@ -10,8 +11,6 @@
     (:dir shell-dir)
     (:cd shell-cd shell-args)
     ))
-
-(defparameter *backtrace* nil)
 
 (defun shell-pwd ()
   (princ (sb-posix:getcwd))
@@ -39,6 +38,18 @@
      (pathname dir)
      (otherwise (pathname (user-homedir-pathname)))))
   (values))
+
+(defun readline-read (prompt)
+  (let ((line (rl:readline :prompt prompt :add-history t)))
+    (loop
+      (let ((x (handler-case (read-from-string line nil)
+                 (error (cdt)
+                        (declare (ignore cdt)) nil))))
+        (if x
+            (return x)
+            (setf line
+                  (concatenate 'string line " "
+                   (rl:readline :add-history t :already-prompted t))))))))
 
 (defun read-args ()
   (unread-char #\newline)
@@ -76,7 +87,6 @@
           ((symbolp x)
            (values (apply x (read-args)) t)))))
 
-(declaim (ftype function eval-print))
 (defun one-of (choices)
   (do ((c choices (cdr c))
        (n 1 (1+ n)))
@@ -85,16 +95,14 @@
   (let ((n (length choices))
         (i))
     (do () ((typep i `(integer 1 ,n)))
-      (format t "~&>> ")
-      (force-output)
-      (let ((x (read t nil *eof-value*)))
+      (let ((x (readline-read ">>")))
         (setf i x)
         (when (and (not (integerp x))
                    (not (eq x *eof-value*)))
           (handler-case (eval-print x)
             (error (condition)
                    (princ condition *error-output*)
-                   (force-output *error-output*)))))
+                   (terpri *error-output*)))))
       (fresh-line))
     (nth (- i 1) choices)))
 
@@ -120,14 +128,12 @@
     (setf +++ ++ /// //   *** (first ///)
           ++  +  //  /    **  (first //)
           +   -  /   vals *   (first /))
-    (mapc #'print vals))
+    (mapc #'print vals)
+    (terpri))
   (defun repl ()
     (let ((*debugger-hook* #'debugger))
       (loop
-        (fresh-line)
-        (princ "> ")
-        (force-output)
-        (setf - (read *standard-input* nil *eof-value*))
+        (setf - (readline-read ">"))
         (when (eq - *eof-value*)
           (return))
         (restart-case
@@ -135,5 +141,3 @@
               (eval-print -))
           (restart-toplevel ()
                             :report "Restart toplevel."))))))
-
-;; EOF
