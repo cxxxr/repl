@@ -1,4 +1,4 @@
-(in-package :cl-repl)
+(in-package :repl)
 
 (defparameter *eof-value* (gensym "EOF"))
 (defparameter *backtrace* nil)
