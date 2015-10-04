@@ -23,13 +23,6 @@
         (cl-fad:list-directory (sb-posix:getcwd)))
   (values))
 
-(defun shell-args ()
-  (unread-char #\newline)
-  (let ((line (read-line)))
-    (with-input-from-string (in line)
-      (when (peek-char t in nil)
-        (list (string-trim '(#\space #\tab) (read-line in)))))))
-
 (defun shell-cd (&optional dir)
   (sb-posix:chdir
    (typecase dir
@@ -39,17 +32,12 @@
      (otherwise (pathname (user-homedir-pathname)))))
   (values))
 
-(defun readline-read (prompt)
-  (let ((line (rl:readline :prompt prompt :add-history t)))
-    (loop
-      (let ((x (handler-case (read-from-string line nil)
-                 (error (cdt)
-                        (declare (ignore cdt)) nil))))
-        (if x
-            (return x)
-            (setf line
-                  (concatenate 'string line " "
-                   (rl:readline :add-history t :already-prompted t))))))))
+(defun shell-args ()
+  (unread-char #\newline)
+  (let ((line (read-line)))
+    (with-input-from-string (in line)
+      (when (peek-char t in nil)
+        (list (string-trim '(#\space #\tab) (read-line in)))))))
 
 (defun read-args ()
   (unread-char #\newline)
@@ -102,7 +90,7 @@
                    (princ condition *error-output*)
                    (terpri *error-output*)))))
       (fresh-line))
-    (nth (- i 1) choices)))
+    (nth (1- i) choices)))
 
 (defun debugger (condition me-or-my-condition)
   (format t "~&~a" condition)
@@ -114,6 +102,18 @@
 (defun error-handle (condition)
   (declare (ignore condition))
   (setf *backtrace* (sb-debug:backtrace-as-list)))
+
+(defun readline-read (prompt)
+  (let ((line (rl:readline :prompt prompt :add-history t)))
+    (loop
+      (let ((x (handler-case (read-from-string line nil)
+                 (error (cdt)
+                        (declare (ignore cdt)) nil))))
+        (if x
+            (return x)
+            (setf line
+                  (concatenate 'string line " "
+                   (rl:readline :add-history t :already-prompted t))))))))
 
 (let (* ** *** - + ++ +++ / // /// vals)
   (defun eval-print (-)
