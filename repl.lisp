@@ -2,13 +2,19 @@
 
 (in-package :repl)
 
-(defun command (cmd arg-string)
-  (multiple-value-bind (stdout-string stderr-string $?)
-      (trivial-shell:shell-command
-       (format nil "~(~a~) ~a" cmd arg-string))
-    (princ stdout-string)
-    (princ stderr-string)
-    $?))
+(defvar *command-table* (make-hash-table))
+
+(defun command-p (x)
+  (gethash x *command-table*))
+
+(defmacro define-command (name parms &body body)
+  `(setf (gethash ',name *command-table*)
+         #'(lambda ,parms ,@body)))
+
+(defun call-command (cmd args)
+  (apply (gethash cmd *command-table*) args))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun common-prefix (items)
   (subseq (car items)
@@ -41,6 +47,12 @@
 (defun add-history-expr (x)
   (add-history (prin1-to-string x)))
 
+(defun read-args-from-string (str)
+  (with-input-from-string (in str)
+    (loop :for x := (read in nil '#1=#:eof)
+      :until (eq x '#1#)
+      :collect x)))
+
 (defun readline-read (prompt)
   (let ((line (rl:readline :prompt prompt)))
     (loop
@@ -56,12 +68,15 @@
                                 (rl:readline :already-prompted t))))
             ((and (zerop count) (symbolp x) (not (null x)))
              (add-history line)
-             (cond ((fboundp x)
+             (cond ((command-p x)
+                    (let ((args
+                           (read-args-from-string
+                            (subseq line pos))))
+                      (return (call-command x args))))
+                   ((fboundp x)
                     (let ((expr
-                           (with-input-from-string (in (subseq line pos))
-                             `(,x ,@(loop :for x := (read in nil '#1=#:eof)
-                                      :until (eq x '#1#)
-                                      :collect x)))))
+                           `(,x ,@(read-args-from-string
+                                   (subseq line pos)))))
                       (return expr)))
                    (t
                     (return x))))
