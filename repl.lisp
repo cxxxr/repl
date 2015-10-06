@@ -33,8 +33,13 @@
 
 (rl:register-function :complete #'symbol-complete)
 
+(defun add-history (str)
+  (cffi:foreign-funcall "add_history"
+                        :string str
+                        :void))
+
 (defun readline-read (prompt)
-  (let ((line (rl:readline :prompt prompt :add-history t)))
+  (let ((line (rl:readline :prompt prompt)))
     (loop
       :with x :and pos
       :for error-p := nil
@@ -45,11 +50,12 @@
       (cond (error-p
              (setq line
                    (concatenate 'string line " "
-                                (rl:readline :already-prompted t
-                                             :add-history t))))
-            ((and (zerop count) (symbolp x))
+                                (rl:readline :already-prompted t))))
+            ((and (zerop count) (symbolp x) (not (null x)))
+             (add-history line)
              (return `(command ',x ,(subseq line pos))))
             (t
+             (add-history (prin1-to-string x))
              (return x))))))
 
 (defun load-rc (pathname)
