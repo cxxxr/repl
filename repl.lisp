@@ -38,6 +38,9 @@
                         :string str
                         :void))
 
+(defun add-history-expr (x)
+  (add-history (prin1-to-string x)))
+
 (defun readline-read (prompt)
   (let ((line (rl:readline :prompt prompt)))
     (loop
@@ -53,9 +56,17 @@
                                 (rl:readline :already-prompted t))))
             ((and (zerop count) (symbolp x) (not (null x)))
              (add-history line)
-             (return `(command ',x ,(subseq line pos))))
+             (cond ((fboundp x)
+                    (let ((expr
+                           (with-input-from-string (in (subseq line pos))
+                             `(,x ,@(loop :for x := (read in nil '#1=#:eof)
+                                      :until (eq x '#1#)
+                                      :collect x)))))
+                      (return expr)))
+                   (t
+                    (return x))))
             (t
-             (add-history (prin1-to-string x))
+             (add-history-expr x)
              (return x))))))
 
 (defun load-rc (pathname)
