@@ -13,5 +13,5 @@
   :serial t
   :components ((:file "repl"))
   :depends-on (:cl-fad
-               :sb-posix
-               :cl-readline))
+               :cl-readline
+               :trivial-shell))
