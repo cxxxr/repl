@@ -33,6 +33,12 @@
 
 (rl:register-function :complete #'symbol-complete)
 
+(defun run-editor (arg key)
+  (declare (ignore arg key))
+  (ed))
+
+(rl:bind-keyseq "\\ee" #'run-editor)
+
 (defun readline-read (prompt)
   (let ((line (rl:readline :prompt prompt :add-history t)))
     (loop
