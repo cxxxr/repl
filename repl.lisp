@@ -33,6 +33,16 @@
 
 (rl:register-function :complete #'symbol-complete)
 
+(defun load-lem ()
+  (require :lem)
+  (eval
+   (read-from-string
+    "(rl:bind-keyseq \"\\\\C-x\\\\C-y\"
+                     #'(lambda (arg key)
+                         (declare (ignore key))
+                         (rl:insert-text
+                          (lem:kill-ring-nth-string arg)))))")))
+
 (defun run-editor (arg key)
   (declare (ignore arg key))
   (ed))
