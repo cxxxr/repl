@@ -33,22 +33,6 @@
 
 (rl:register-function :complete #'symbol-complete)
 
-(defun load-lem ()
-  (require :lem)
-  (eval
-   (read-from-string
-    "(rl:bind-keyseq \"\\\\C-x\\\\C-y\"
-                     #'(lambda (arg key)
-                         (declare (ignore key))
-                         (rl:insert-text
-                          (lem:kill-ring-nth-string arg)))))")))
-
-(defun run-editor (arg key)
-  (declare (ignore arg key))
-  (ed))
-
-(rl:bind-keyseq "\\ee" #'run-editor)
-
 (defun readline-read (prompt)
   (let ((line (rl:readline :prompt prompt :add-history t)))
     (loop
@@ -68,6 +52,21 @@
             (t
              (return x))))))
 
+(defun load-rc (pathname)
+  (let ((pathname (probe-file pathname)))
+    (when pathname
+      (format t "~&loading ~a~%" pathname)
+      (load pathname :verbose nil)
+      (format t "~&loaded ~a~%" pathname)
+      t)))
+
+(let ((loaded nil))
+  (defun init (&optional force)
+    (when (or (not loaded) force)
+      (setq loaded t)
+      (or (load-rc (merge-pathnames ".replrc.lisp" (user-homedir-pathname)))
+          (load-rc "replrc.lisp")))))
+
 (let (* ** *** - + ++ +++ / // /// values)
   (defun eval-print (-)
     (setq values
@@ -78,6 +77,7 @@
     (mapc #'pprint values)
     (terpri))
   (defun repl ()
+    (init)
     (loop
       (setq - (readline-read "> "))
       (restart-case (eval-print -)
