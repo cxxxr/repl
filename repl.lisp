@@ -25,14 +25,39 @@
                                  (length item)))
                          (cdr items)))))
 
+(defun package-prefix (str)
+  (cond ((let ((pos (search "::" str)))
+           (when pos
+             (list (subseq str (+ pos 2)) (subseq str 0 pos) nil))))
+        ((let ((pos (position #\: str)))
+           (when pos
+             (list (subseq str (+ pos 1)) (subseq str 0 pos) t))))
+        (t
+         (list str nil nil))))
+
 (defun symbol-complete (text start end)
   (declare (ignore start end))
   (let ((text (string-upcase text))
         (els))
-    (do-all-symbols (sym)
-      (let ((name (string sym)))
-        (when (eql 0 (search text name))
-          (push (string-downcase name) els))))
+    (flet ((body (sym text prefix)
+                 (let ((name (string sym)))
+                   (when (eql 0 (search text name))
+                     (push (format nil "~(~a~a~)" prefix name)
+                           els)))))
+      (destructuring-bind (symbol-name package external-p)
+          (package-prefix text)
+        (cond ((and package external-p)
+               (do-external-symbols (sym package)
+                 (body sym symbol-name (format nil "~a:" package))))
+              (package
+               (do-symbols (sym package)
+                 (body sym symbol-name (format nil "~a::" package))))
+              (t
+               (do-symbols (sym *package*)
+                 (body sym symbol-name ""))
+               (dolist (pkg (list-all-packages))
+                 (body (format nil "~a:" (package-name pkg))
+                       symbol-name ""))))))
     (if (cdr els)
         (cons (common-prefix els) els)
         els)))
