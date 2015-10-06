@@ -12,6 +12,5 @@
 (defsystem repl
   :serial t
   :components ((:file "repl"))
-  :depends-on (:cl-fad
-               :cl-readline
+  :depends-on (:cl-readline
                :trivial-shell))
