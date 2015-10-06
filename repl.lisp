@@ -70,7 +70,7 @@
                         :void))
 
 (defun add-history-expr (x)
-  (add-history (prin1-to-string x)))
+  (add-history (string-downcase (prin1-to-string x))))
 
 (defun read-args-from-string (str)
   (with-input-from-string (in str)
