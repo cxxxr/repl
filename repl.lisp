@@ -10,6 +10,29 @@
     (princ stderr-string)
     $?))
 
+(defun common-prefix (items)
+  (subseq (car items)
+          0
+          (apply #'min
+                 (mapcar #'(lambda (item)
+                             (or (mismatch (car items) item)
+                                 (length item)))
+                         (cdr items)))))
+
+(defun symbol-complete (text start end)
+  (declare (ignore start end))
+  (let ((text (string-upcase text))
+        (els))
+    (do-all-symbols (sym)
+      (let ((name (string sym)))
+        (when (eql 0 (search text name))
+          (push (string-downcase name) els))))
+    (if (cdr els)
+        (cons (common-prefix els) els)
+        els)))
+
+(rl:register-function :complete #'symbol-complete)
+
 (defun readline-read (prompt)
   (let ((line (rl:readline :prompt prompt :add-history t)))
     (loop
