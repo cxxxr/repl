@@ -168,8 +168,7 @@
   (let ((line (rl:readline :prompt prompt)))
     (loop
       :with x :and pos
-      :for error-p := nil
-      :for count :from 0 :do
+      :for error-p := nil :do
       (handler-case (setf (values x pos)
                           (read-from-string line nil))
         (error () (setq error-p t)))
@@ -177,7 +176,7 @@
              (setq line
                    (concatenate 'string line " "
                                 (rl:readline :already-prompted t))))
-            ((and (zerop count) (symbolp x) (not (null x)))
+            ((and (symbolp x) (not (null x)))
              (add-history line)
              (cond ((command-p x)
                     (return (call-command x (subseq line pos))))
@@ -192,7 +191,8 @@
                     (let ((str (string-left-trim '(#\space #\tab) line)))
                       (when (and (< 0 (length str))
                                  (eql #\! (aref str 0)))
-                        (return `(shell-command ,(subseq str 1))))))))
+                        (return `(shell-command ,(subseq str 1)))))
+                    (return x))))
             (t
              (add-history-expr x)
              (return x))))))
