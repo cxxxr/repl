@@ -66,7 +66,75 @@
         (cons (common-prefix els) els)
         els)))
 
-(rl:register-function :complete #'symbol-complete)
+(defun filter-filenames (path text)
+  (let* ((path (probe-file path))
+         (pathname-length (length (namestring path))))
+    (loop
+      :for pathname :in (cl-fad:list-directory path)
+      :for name := (subseq (namestring pathname) pathname-length)
+      :when (eql 0 (search text name))
+      :collect name)))
+
+(defun file-complete (text default-directories-fn)
+  (if (find #\/ text)
+      (let* ((slash-pos (1+ (position #\/ text :from-end t)))
+             (dir (subseq text 0 slash-pos))
+             (name (subseq text slash-pos)))
+        (mapcar #'(lambda (name)
+                    (format nil "~a~a" dir name))
+                (filter-filenames dir name)))
+      (mapcan #'(lambda (path)
+                  (filter-filenames path text))
+              (funcall default-directories-fn))))
+
+(defun do-filename-complete-p (text start end)
+  (declare (ignore end))
+  (or (and (< 0 start)
+           (eql #\" (aref rl:*line-buffer*
+                          (1- start))))
+      (let ((str (string-trim '(#\space #\tab) rl:*line-buffer*)))
+        (and (< 0 (length str))
+             (eql #\! (aref str 0))))))
+
+(defun shell-command-complete (text)
+  (let ((els
+         (file-complete text
+                        #'(lambda ()
+                            (split-sequence:split-sequence
+                             #\: (uiop:getenv "PATH"))))))
+    (cond ((null els)
+           nil)
+          ((cdr els)
+           (cons (format nil "!~a" (common-prefix els)) els))
+          (t
+           (list (format nil "!~a" (car els)))))))
+
+(defun shell-complete (text start end)
+  (when (zerop start)
+    (setq text
+          (subseq (string-trim '(#\space #\tab)
+                               text)
+                  1)))
+  (shell-command-complete text))
+
+(defun repl-complete (text start end)
+  (let ((linebuf (string-trim '(#\space #\tab) rl:*line-buffer*)))
+    (cond ((and (zerop start)
+                (< 0 (length linebuf))
+                (eql #\! (aref linebuf 0)))
+           (shell-complete text start end))
+          ((do-filename-complete-p text start end)
+           (let ((els
+                  (file-complete text
+                                 #'(lambda ()
+                                     (list (uiop:getcwd))))))
+             (if (cdr els)
+                 (cons (common-prefix els) els)
+                 els)))
+          (t
+           (symbol-complete text start end)))))
+
+(rl:register-function :complete #'repl-complete)
 
 (defun add-history (str)
   (cffi:foreign-funcall "add_history"
@@ -107,6 +175,8 @@
                            `(,x ,@(read-args-from-string
                                    (subseq line pos)))))
                       (return expr)))
+                   ((boundp x)
+                    (return x))
                    (t
                     (let ((str (string-left-trim '(#\space #\tab) line)))
                       (when (and (< 0 (length str))
