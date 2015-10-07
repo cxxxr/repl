@@ -35,7 +35,11 @@
              (list (subseq str (+ pos 2)) (subseq str 0 pos) nil))))
         ((let ((pos (position #\: str)))
            (when pos
-             (list (subseq str (+ pos 1)) (subseq str 0 pos) t))))
+             (list (subseq str (+ pos 1))
+                   (if (zerop pos)
+                       "KEYWORD"
+                       (subseq str 0 pos))
+                   t))))
         (t
          (list str nil nil))))
 
@@ -52,7 +56,11 @@
           (package-prefix text)
         (cond ((and package external-p)
                (do-external-symbols (sym package)
-                 (body sym symbol-name (format nil "~a:" package))))
+                 (body sym symbol-name
+                       (if (equal (package-name :keyword)
+                                  (package-name package))
+                           ":"
+                           (format nil "~a:" package)))))
               (package
                (do-symbols (sym package)
                  (body sym symbol-name (format nil "~a::" package))))
