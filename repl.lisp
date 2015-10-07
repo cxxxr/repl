@@ -13,7 +13,7 @@
 
 (defmacro define-command (name parms &body body)
   `(setf (gethash ',name *command-table*)
-         #'(lambda ,parms ,@body)))
+         #'(lambda ,parms (declare (ignorable ,@parms)) ,@body)))
 
 (defun call-command (cmd arg)
   (funcall (gethash cmd *command-table*) arg))
@@ -21,8 +21,7 @@
 (define-command :cd (arg)
   (uiop:chdir arg))
 
-(define-command :pwd (arg)
-  (declare (ignore arg))
+(define-command :pwd (_)
   (uiop:getcwd))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -86,7 +85,7 @@
          (pathname-length (length (namestring path))))
     (loop
       :for pathname :in (cl-fad:list-directory path)
-      :for name := (subseq (namestring pathname) pathname-length)
+      :for name := (enough-namestring pathname path)
       :when (eql 0 (search text name))
       :collect name)))
 
