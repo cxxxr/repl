@@ -18,6 +18,12 @@
 (defun call-command (cmd args)
   (apply (gethash cmd *command-table*) args))
 
+(define-command :cd (arg)
+  (uiop:chdir arg))
+
+(define-command :pwd ()
+  (uiop:getcwd))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun common-prefix (items)
@@ -221,6 +227,6 @@
   (defun repl ()
     (init)
     (loop
-      (setq - (readline-read "> "))
-      (restart-case (eval-print -)
+      (restart-case (eval-print
+                     (setq - (readline-read "> ")))
         (restart-toplevel () :report "Restart toplevel.")))))
