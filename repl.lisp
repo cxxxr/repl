@@ -1,5 +1,9 @@
 ;; -*- mode: lisp; package: repl -*-
 
+(defpackage :repl
+  (:use :cl :shell-command)
+  (:export :repl))
+
 (in-package :repl)
 
 (defvar *command-table* (make-hash-table))
@@ -104,7 +108,10 @@
                                    (subseq line pos)))))
                       (return expr)))
                    (t
-                    (return x))))
+                    (let ((str (string-left-trim '(#\space #\tab) line)))
+                      (when (and (< 0 (length str))
+                                 (eql #\! (aref str 0)))
+                        (return `(shell-command ,(subseq str 1))))))))
             (t
              (add-history-expr x)
              (return x))))))

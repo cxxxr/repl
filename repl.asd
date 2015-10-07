@@ -1,7 +1,6 @@
-(defpackage :repl
-  (:use :cl)
-  (:export :repl))
+(load "shell-command.asd")
 
+#-asdf
 (require :asdf)
 
 (defpackage :repl-asd
@@ -12,5 +11,4 @@
 (defsystem repl
   :serial t
   :components ((:file "repl"))
-  :depends-on (:cl-readline
-               :trivial-shell))
+  :depends-on (:cl-readline :shell-command))
