@@ -15,13 +15,14 @@
   `(setf (gethash ',name *command-table*)
          #'(lambda ,parms ,@body)))
 
-(defun call-command (cmd args)
-  (apply (gethash cmd *command-table*) args))
+(defun call-command (cmd arg)
+  (funcall (gethash cmd *command-table*) arg))
 
 (define-command :cd (arg)
   (uiop:chdir arg))
 
-(define-command :pwd ()
+(define-command :pwd (arg)
+  (declare (ignore arg))
   (uiop:getcwd))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -180,10 +181,7 @@
             ((and (zerop count) (symbolp x) (not (null x)))
              (add-history line)
              (cond ((command-p x)
-                    (let ((args
-                           (read-args-from-string
-                            (subseq line pos))))
-                      (return (call-command x args))))
+                    (return (call-command x (subseq line pos))))
                    ((fboundp x)
                     (let ((expr
                            `(,x ,@(read-args-from-string
