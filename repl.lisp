@@ -18,8 +18,8 @@
   (uiop:getcwd))
 
 (defun dir ()
-  (dolist (path (cl-fad:list-directory "."))
-    (format t "~&~a~%" path)))
+  (dolist (path (cl-fad:list-directory (uiop:getcwd)))
+    (format t "~&~a~%" (enough-namestring path (uiop:getcwd)))))
 
 (defun ld (pathspec &rest args)
   (apply #'load
