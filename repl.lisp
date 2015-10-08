@@ -225,5 +225,7 @@
     (init)
     (loop
       (restart-case (eval-print
-                     (setq - (readline-read "> ")))
+                     (setq - (readline-read
+                              (format nil "~&~a> "
+                                      (package-name *package*)))))
         (restart-toplevel () :report "Restart toplevel.")))))
