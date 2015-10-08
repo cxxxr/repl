@@ -6,26 +6,6 @@
 
 (in-package :repl)
 
-(defvar *command-table* (make-hash-table))
-
-(defun command-p (x)
-  (gethash x *command-table*))
-
-(defmacro define-command (name parms &body body)
-  `(setf (gethash ',name *command-table*)
-         #'(lambda ,parms (declare (ignorable ,@parms)) ,@body)))
-
-(defun call-command (cmd arg)
-  (funcall (gethash cmd *command-table*) arg))
-
-(define-command :cd (arg)
-  (uiop:chdir arg))
-
-(define-command :pwd (_)
-  (uiop:getcwd))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (defun common-prefix (items)
   (subseq (car items)
           0
@@ -178,9 +158,7 @@
                                 (rl:readline :already-prompted t))))
             ((and (symbolp x) (not (null x)))
              (add-history line)
-             (cond ((command-p x)
-                    (return (call-command x (subseq line pos))))
-                   ((fboundp x)
+             (cond ((fboundp x)
                     (let ((expr
                            `(,x ,@(read-args-from-string
                                    (subseq line pos)))))
