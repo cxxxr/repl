@@ -2,9 +2,23 @@
 
 (defpackage :repl
   (:use :cl :shell-command)
-  (:export :repl))
+  (:export
+   :repl
+   :cd
+   :pwd
+   :dir))
 
 (in-package :repl)
+
+(defun cd (dirname)
+  (uiop:chdir dirname))
+
+(defun pwd ()
+  (uiop:getcwd))
+
+(defun dir ()
+  (dolist (path (cl-fad:list-directory "."))
+    (format t "~&~a~%" path)))
 
 (defun common-prefix (items)
   (subseq (car items)
