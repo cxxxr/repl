@@ -6,7 +6,8 @@
    :repl
    :cd
    :pwd
-   :dir))
+   :dir
+   :ld))
 
 (in-package :repl)
 
@@ -19,6 +20,12 @@
 (defun dir ()
   (dolist (path (cl-fad:list-directory "."))
     (format t "~&~a~%" path)))
+
+(defun ld (pathspec &rest args)
+  (apply #'load
+         (merge-pathnames (pathname pathspec)
+                          (uiop:getcwd))
+         args))
 
 (defun common-prefix (items)
   (subseq (car items)
