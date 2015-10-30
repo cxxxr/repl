@@ -1,21 +1,5 @@
 (in-package :repl)
 
-(defun cd (dirname)
-  (uiop:chdir dirname))
-
-(defun pwd ()
-  (uiop:getcwd))
-
-(defun dir ()
-  (dolist (path (cl-fad:list-directory (uiop:getcwd)))
-    (format t "~&~a~%" (enough-namestring path (uiop:getcwd)))))
-
-(defun ld (pathspec &rest args)
-  (apply #'load
-         (merge-pathnames (pathname pathspec)
-                          (uiop:getcwd))
-         args))
-
 (defun add-history (str)
   (cffi:foreign-funcall "add_history"
                         :string str
