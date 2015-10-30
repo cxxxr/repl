@@ -159,45 +159,54 @@
                         :string str
                         :void))
 
-(defun add-history-expr (x)
-  (add-history (string-downcase (prin1-to-string x))))
+(defun finish-sexp-p (string)
+  (handler-case (progn
+                  (read-from-string string nil)
+                  t)
+    (error ()
+           (return-from finish-sexp-p nil))))
+
+(cffi:defcfun ("rl_newline") :int
+              (count :int)
+              (key :int))
+
+(defun newline (arg key)
+  (declare (ignore arg key))
+  (if (finish-sexp-p rl:*line-buffer*)
+      (rl-newline 1 0)
+      (rl:insert-text (string #\newline))))
+
+(rl:bind-keyseq (string #\newline) #'newline)
+(rl:bind-keyseq (string #\return) #'newline)
+
+(defvar *eof-value* (gensym "EOF"))
 
 (defun read-args-from-string (str)
   (with-input-from-string (in str)
-    (loop :for x := (read in nil '#1=#:eof)
-      :until (eq x '#1#)
+    (loop :for x := (read in nil *eof-value*)
+      :until (eq x *eof-value*)
       :collect x)))
 
 (defun readline-read (prompt)
-  (let ((line (rl:readline :prompt prompt)))
-    (loop
-      :with x :and pos
-      :for error-p := nil :do
-      (handler-case (setf (values x pos)
-                          (read-from-string line nil))
-        (error () (setq error-p t)))
-      (cond (error-p
-             (setq line
-                   (concatenate 'string line " "
-                                (rl:readline :already-prompted t))))
-            ((and (symbolp x) (not (null x)))
-             (add-history line)
-             (cond ((fboundp x)
-                    (let ((expr
-                           `(,x ,@(read-args-from-string
-                                   (subseq line pos)))))
-                      (return expr)))
-                   ((boundp x)
-                    (return x))
-                   (t
-                    (let ((str (string-left-trim '(#\space #\tab) line)))
-                      (when (and (< 0 (length str))
-                                 (eql #\! (aref str 0)))
-                        (return `(shell-command ,(subseq str 1)))))
-                    (return x))))
-            (t
-             (add-history-expr x)
-             (return x))))))
+  (let ((string-expr (rl:readline :prompt prompt)))
+    (if (null string-expr)
+        *eof-value*
+        (multiple-value-bind (x i)
+            (read-from-string string-expr nil)
+          (add-history string-expr)
+          (if (and (symbolp x) (not (null x)))
+              (cond ((fboundp x)
+                     `(,x ,@(read-args-from-string
+                             (subseq string-expr i))))
+                    ((boundp x)
+                     x)
+                    ((let ((str (string-left-trim '(#\space #\tab)
+                                                  string-expr)))
+                       (if (and (< 0 (length str))
+                                (char= #\! (aref str 0)))
+                           `(shell-command ,(subseq str 1))
+                           x))))
+              x)))))
 
 (defun load-rc (pathname)
   (let ((pathname (probe-file pathname)))
@@ -226,8 +235,10 @@
   (defun repl ()
     (init)
     (loop
-      (restart-case (eval-print
-                     (setq - (readline-read
-                              (format nil "~&~a> "
-                                      (package-name *package*)))))
+      (setq - (readline-read
+               (format nil "~&~a> "
+                       (package-name *package*))))
+      (when (eq - *eof-value*)
+        (return))
+      (restart-case (eval-print -)
         (restart-toplevel () :report "Restart toplevel.")))))
