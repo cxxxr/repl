@@ -10,7 +10,8 @@
 
 (defsystem repl
   :serial t
-  :components ((:file "repl"))
+  :components ((:file "util")
+               (:file "repl"))
   :depends-on (:cl-readline
                :shell-command
                :cl-fad

@@ -1,7 +1,7 @@
 ;; -*- mode: lisp; package: repl -*-
 
 (defpackage :repl
-  (:use :cl :shell-command)
+  (:use :cl :shell-command :util)
   (:export
    :repl
    :cd
