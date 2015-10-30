@@ -1,8 +1,4 @@
-(defpackage :util
-  (:use :cl)
-  (:export :pdebug))
-
-(in-package :util)
+(in-package :repl)
 
 (defun pdebug (x)
   (with-open-file (out "DEBUG"
