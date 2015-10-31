@@ -66,11 +66,11 @@
 (defun skip-expr-prefix-forward (line-buffer point)
   (skip-forward line-buffer point #'expr-prefix-char-p))
 
-(defun skip-list-forward (line-buffer point)
-  (loop :with depth := 0 :do
+(defun skip-list-forward (line-buffer point &optional (depth 0))
+  (loop
     (incf point)
     (when (<= (length line-buffer) point)
-      (return (length line-buffer)))
+      (throw 'scan-error nil))
     (case (forward-syntax-type line-buffer point)
       ((:open-paren)
        (incf depth))
@@ -84,7 +84,7 @@
   (loop
     (incf point)
     (when (<= (length line-buffer) point)
-      (return (length line-buffer)))
+      (throw 'scan-error nil))
     (case (forward-syntax-type line-buffer point)
       ((:string-quote)
        (return (1+ point))))))
@@ -113,7 +113,9 @@
 
 (defun forward-sexp-point (line-buffer point)
   (setq point (skip-space-forward line-buffer point))
-  (skip-sexp-forward line-buffer point))
+  (or (catch 'scan-error
+        (skip-sexp-forward line-buffer point))
+      point))
 
 (defun forward-sexp (arg key)
   (setq rl:*point*
@@ -139,16 +141,16 @@
 (defun skip-expr-prefix-backward (line-buffer point)
   (skip-backward line-buffer point #'expr-prefix-char-p))
 
-(defun skip-list-backward (line-buffer point)
-  (loop :with count := 0 :do
+(defun skip-list-backward (line-buffer point &optional (depth 0))
+  (loop
     (decf point)
     (when (<= point 0)
-      (return 0))
+      (throw 'scan-error nil))
     (case (backward-syntax-type line-buffer point)
       ((:closed-paren)
-       (incf count))
+       (incf depth))
       ((:open-paren)
-       (when (minusp (decf count))
+       (when (minusp (decf depth))
          (return (1- point))))
       ((:string-quote)
        (setq point (skip-string-backward line-buffer point))))))
@@ -157,7 +159,7 @@
   (loop
     (decf point)
     (when (<= point 0)
-      (return 0))
+      (throw 'scan-error nil))
     (case (backward-syntax-type line-buffer point)
       ((:string-quote)
        (return (1- point))))))
@@ -186,7 +188,9 @@
 
 (defun backward-sexp-point (line-buffer point)
   (setq point (skip-space-backward line-buffer point))
-  (skip-sexp-backward line-buffer point))
+  (or (catch 'scan-error
+        (skip-sexp-backward line-buffer point))
+      point))
 
 (defun backward-sexp (arg key)
   (setq rl:*point*
