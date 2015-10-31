@@ -67,15 +67,16 @@
   (skip-forward line-buffer point #'expr-prefix-char-p))
 
 (defun skip-list-forward (line-buffer point)
-  (loop
+  (loop :with depth := 0 :do
     (incf point)
     (when (<= (length line-buffer) point)
       (return (length line-buffer)))
     (case (forward-syntax-type line-buffer point)
       ((:open-paren)
-       (setq point (skip-list-forward line-buffer point)))
+       (incf depth))
       ((:closed-paren)
-       (return (1+ point)))
+       (when (minusp (decf depth))
+         (return (1+ point))))
       ((:string-quote)
        (setq point (skip-string-forward line-buffer point))))))
 
@@ -139,15 +140,16 @@
   (skip-backward line-buffer point #'expr-prefix-char-p))
 
 (defun skip-list-backward (line-buffer point)
-  (loop
+  (loop :with count := 0 :do
     (decf point)
     (when (<= point 0)
       (return 0))
     (case (backward-syntax-type line-buffer point)
       ((:closed-paren)
-       (setq point (skip-list-backward line-buffer point)))
+       (incf count))
       ((:open-paren)
-       (return (1- point)))
+       (when (minusp (decf count))
+         (return (1- point))))
       ((:string-quote)
        (setq point (skip-string-backward line-buffer point))))))
 
