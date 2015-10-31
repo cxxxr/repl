@@ -28,7 +28,7 @@
   (bool (member c *expr-prefix-chars*)))
 
 (defun forward-syntax-type (line-buffer point)
-  (when (<= (length line-buffer) point)
+  (unless (<= 0 point (1- (length line-buffer)))
     (return-from forward-syntax-type :space))
   (let ((c (aref line-buffer point)))
     (cond ((and (< 0 point)
