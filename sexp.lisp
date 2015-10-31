@@ -120,6 +120,7 @@
       point))
 
 (defun forward-sexp (arg key)
+  (declare (ignore arg key))
   (setq rl:*point*
         (forward-sexp-point rl:*line-buffer*
                             rl:*point*)))
@@ -195,6 +196,7 @@
       point))
 
 (defun backward-sexp (arg key)
+  (declare (ignore arg key))
   (setq rl:*point*
         (backward-sexp-point rl:*line-buffer*
                              rl:*point*)))
@@ -207,6 +209,7 @@
       point))
 
 (defun down-list (arg key)
+  (declare (ignore arg key))
   (let ((point (down-list-internal rl:*line-buffer* rl:*point*)))
     (when point
       (setq rl:*point* point))))
@@ -219,6 +222,7 @@
       point))
 
 (defun up-list (arg key)
+  (declare (ignore arg key))
   (let ((point (up-list-internal rl:*line-buffer* rl:*point*)))
     (when point
       (setq rl:*point* point))))

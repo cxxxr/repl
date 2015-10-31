@@ -58,13 +58,11 @@
         els)))
 
 (defun filter-filenames (path text)
-  (let* ((path (probe-file path))
-         (pathname-length (length (namestring path))))
-    (loop
-      :for pathname :in (cl-fad:list-directory path)
-      :for name := (enough-namestring pathname path)
-      :when (eql 0 (search text name))
-      :collect name)))
+  (loop :with path = (probe-file path)
+    :for pathname :in (cl-fad:list-directory path)
+    :for name := (enough-namestring pathname path)
+    :when (eql 0 (search text name))
+    :collect name))
 
 (defun file-complete (text default-directories-fn)
   (if (find #\/ text)
@@ -79,7 +77,7 @@
               (funcall default-directories-fn))))
 
 (defun do-filename-complete-p (text start end)
-  (declare (ignore end))
+  (declare (ignore text end))
   (or (and (< 0 start)
            (eql #\" (aref rl:*line-buffer*
                           (1- start))))
@@ -101,6 +99,7 @@
            (list (format nil "!~a" (car els)))))))
 
 (defun shell-complete (text start end)
+  (declare (ignore end))
   (when (zerop start)
     (setq text
           (subseq (string-trim '(#\space #\tab)
