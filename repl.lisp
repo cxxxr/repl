@@ -62,7 +62,7 @@
     (init)
     (loop
       (setq - (readline-read
-               (format nil "~&~a> "
+               (format nil "~&<~a>"
                        (package-name *package*))))
       (when (eq - *eof-value*)
         (return))

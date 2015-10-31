@@ -20,6 +20,14 @@
               (count :int)
               (key :int))
 
+(cffi:defcfun ("rl_get_previous_history") :int
+              (count :int)
+              (key :int))
+
+(cffi:defcfun ("rl_get_next_history") :int
+              (count :int)
+              (key :int))
+
 (defvar *editor-column* 0)
 
 (defun accept-line ()
@@ -132,3 +140,15 @@
   (rl-end-of-line 1 0))
 
 (rl:bind-keyseq "\\e>" #'end-of-buffer)
+
+(defun previous-history (arg key)
+  (declare (ignore arg key))
+  (rl-get-previous-history 1 0))
+
+(rl:bind-keyseq "\\ep" #'previous-history)
+
+(defun next-history (arg key)
+  (declare (ignore arg key))
+  (rl-get-next-history 1 0))
+
+(rl:bind-keyseq "\\en" #'next-history)
