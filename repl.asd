@@ -14,6 +14,7 @@
                (:file "util")
                (:file "complete")
                (:file "sexp")
+               (:file "basic")
                (:file "repl"))
   :depends-on (:cl-readline
                :shell-command

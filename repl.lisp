@@ -5,26 +5,6 @@
                         :string str
                         :void))
 
-(defun finish-sexp-p (string)
-  (handler-case (progn
-                  (read-from-string string nil)
-                  t)
-    (error ()
-           (return-from finish-sexp-p nil))))
-
-(cffi:defcfun ("rl_newline") :int
-              (count :int)
-              (key :int))
-
-(defun newline (arg key)
-  (declare (ignore arg key))
-  (if (finish-sexp-p rl:*line-buffer*)
-      (rl-newline 1 0)
-      (rl:insert-text (string #\newline))))
-
-(rl:bind-keyseq (string #\newline) #'newline)
-(rl:bind-keyseq (string #\return) #'newline)
-
 (defvar *eof-value* (gensym "EOF"))
 
 (defun read-args-from-string (str)
@@ -34,7 +14,7 @@
       :collect x)))
 
 (defun readline-read (prompt)
-  (let ((string-expr (rl:readline :prompt prompt)))
+  (let ((string-expr (readline prompt)))
     (if (null string-expr)
         *eof-value*
         (multiple-value-bind (x i)
