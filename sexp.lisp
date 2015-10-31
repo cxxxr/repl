@@ -73,9 +73,11 @@
       (throw 'scan-error nil))
     (case (forward-syntax-type line-buffer point)
       ((:open-paren)
-       (incf depth))
+       (incf depth)
+       (when (zerop depth)
+         (return (1+ point))))
       ((:closed-paren)
-       (when (minusp (decf depth))
+       (when (= -1 (decf depth))
          (return (1+ point))))
       ((:string-quote)
        (setq point (skip-string-forward line-buffer point))))))
@@ -150,7 +152,7 @@
       ((:closed-paren)
        (incf depth))
       ((:open-paren)
-       (when (minusp (decf depth))
+       (when (= -1 (decf depth))
          (return (1- point))))
       ((:string-quote)
        (setq point (skip-string-backward line-buffer point))))))
@@ -200,12 +202,9 @@
 (rl:bind-keyseq "\\e\\C-b" #'backward-sexp)
 
 (defun down-list-internal (line-buffer point)
-  (loop
-    (when (<= (length line-buffer) point)
-      (return nil))
-    (when (eq :open-paren (forward-syntax-type line-buffer point))
-      (return (1+ point)))
-    (incf point)))
+  (or (catch 'scan-error
+        (skip-list-forward line-buffer (1- point) -1))
+      point))
 
 (defun down-list (arg key)
   (let ((point (down-list-internal rl:*line-buffer* rl:*point*)))
@@ -215,12 +214,9 @@
 (rl:bind-keyseq "\\e\\C-d" #'down-list)
 
 (defun up-list-internal (line-buffer point)
-  (loop
-    (when (<= point 0)
-      (return nil))
-    (when (eq :open-paren (backward-syntax-type line-buffer point))
-      (return (1- point)))
-    (decf point)))
+  (or (catch 'scan-error
+        (skip-list-backward line-buffer (1+ point) 0))
+      point))
 
 (defun up-list (arg key)
   (let ((point (up-list-internal rl:*line-buffer* rl:*point*)))
