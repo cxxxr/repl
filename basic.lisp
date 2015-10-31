@@ -40,14 +40,18 @@
                   t)
     (error () (return-from finish-sexp-p nil))))
 
-(defun newline (arg key)
+(defun repl-newline (arg key)
+  (declare (ignore arg key))
+  (rl:insert-text (string #\newline)))
+
+(defun repl-return (arg key)
   (declare (ignore arg key))
   (if (finish-sexp-p rl:*line-buffer*)
       (accept-line)
       (rl:insert-text (string #\newline))))
 
-(rl:bind-keyseq (string #\newline) #'newline)
-(rl:bind-keyseq (string #\return) #'newline)
+(rl:bind-keyseq (string #\newline) #'repl-newline)
+(rl:bind-keyseq (string #\return) #'repl-return)
 
 (defun readline (prompt)
   (rl:readline :prompt prompt))
