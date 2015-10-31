@@ -36,10 +36,9 @@
 
 (defun finish-sexp-p (string)
   (handler-case (progn
-                  (read-from-string string nil)
+                  (read-from-string string)
                   t)
-    (error ()
-           (return-from finish-sexp-p nil))))
+    (error () (return-from finish-sexp-p nil))))
 
 (defun newline (arg key)
   (declare (ignore arg key))
@@ -51,7 +50,7 @@
 (rl:bind-keyseq (string #\return) #'newline)
 
 (defun readline (prompt)
-  (rl:readline :prompt (format nil "~a~%" prompt)))
+  (rl:readline :prompt prompt))
 
 (defun current-linum ()
   (1+ (count #\newline rl:*line-buffer* :end rl:*point*)))
