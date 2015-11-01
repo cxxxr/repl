@@ -13,8 +13,8 @@
   :components ((:file "package")
                (:file "util")
                (:file "complete")
+               (:file "editor")
                (:file "sexp")
-               (:file "basic")
                (:file "repl"))
   :depends-on (:cl-readline
                :shell-command
