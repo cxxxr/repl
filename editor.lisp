@@ -56,6 +56,7 @@
   (def "rl_menu_complete")
   (def "rl_backward_menu_complete")
   (def "rl_get_next_history")
+  (def "rl_get_previous_history")
   (def "rl_noninc_forward_search")
   (def "rl_noninc_reverse_search")
   (def "rl_noninc_forward_search_again")
