@@ -193,6 +193,7 @@
 (rl:bind-keyseq "\\en" #'next-history)
 
 (defun kill-line (arg key)
+  (declare (ignore arg key))
   (let ((orig-point rl:*point*))
     (end-of-line 1 0)
     (if (/= orig-point rl:*point*)
