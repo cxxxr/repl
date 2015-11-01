@@ -203,3 +203,19 @@
     (setq rl:*mark* rl:*point*)))
 
 (rl:bind-keyseq "\\C-k" #'kill-line)
+
+(defvar *mark-point* 0)
+
+(defun mark-set (arg key)
+  (declare (ignore arg key))
+  (setq *mark-point* rl:*point*))
+
+(rl:bind-keyseq "\\C-@" #'mark-set)
+
+(defun kill-region (arg key)
+  (declare (ignore arg key))
+  (let ((start (min rl:*point* *mark-point*))
+        (end (max rl:*point* *mark-point*)))
+    (rl-kill-text start end)
+    (setq rl:*point* start)
+    (setq *mark-point* start)))

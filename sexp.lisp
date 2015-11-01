@@ -228,3 +228,19 @@
       (setq rl:*point* point))))
 
 (rl:bind-keyseq "\\e\\C-u" #'up-list)
+
+(defun mark-sexp (arg key)
+  (declare (ignore arg key))
+  (let ((orig-point rl:*point*))
+    (forward-sexp 1 0)
+    (mark-set 1 0)
+    (setq rl:*point* orig-point)))
+
+(rl:bind-keyseq "\\e\\C-@" #'mark-sexp)
+
+(defun kill-sexp (arg key)
+  (declare (ignore arg key))
+  (mark-sexp 1 0)
+  (kill-region 1 0))
+
+(rl:bind-keyseq "\\e\\C-k" #'kill-sexp)
