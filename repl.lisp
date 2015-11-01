@@ -1,11 +1,24 @@
 (in-package :repl)
 
+(defvar *eof-value* (gensym "EOF"))
+(defvar *commands* nil)
+
+(defun add-command (names function)
+  (dolist (name names)
+    (push (cons name function)
+          *commands*)))
+
+(defmacro define-command ((name &rest rest-names) parameters &body body)
+  `(add-command (cons ,name ,rest-names)
+                #'(lambda ,parameters ,@body)))
+
+(defun find-command (x)
+  (cdr (assoc x *commands*)))
+
 (defun add-history (str)
   (cffi:foreign-funcall "add_history"
                         :string str
                         :void))
-
-(defvar *eof-value* (gensym "EOF"))
 
 (defun read-args-from-string (str)
   (with-input-from-string (in str)
@@ -21,7 +34,11 @@
             (read-from-string string-expr nil)
           (add-history string-expr)
           (if (and (symbolp x) (not (null x)))
-              (cond ((fboundp x)
+              (cond ((keywordp x)
+                     (values x
+                             (read-args-from-string
+                              (subseq string-expr i))))
+                    ((fboundp x)
                      `(,x ,@(read-args-from-string
                              (subseq string-expr i))))
                     ((boundp x)
@@ -49,10 +66,54 @@
       (or (load-rc (merge-pathnames ".replrc.lisp" (user-homedir-pathname)))
           (load-rc "replrc.lisp")))))
 
+(defvar *backtrace-string* nil)
+
+(defun one-of (choices)
+  (loop
+    :for n :from 0 :by 1
+    :for c :in choices
+    :do (format t "~&[~d] ~a~%" n c))
+  (let ((*commands* *commands*))
+    (add-command '(:bt :backtrace)
+                 #'(lambda ()
+                     (format t "~&~a~%" *backtrace-string*)))
+    (add-command '(:c :cont :continue)
+                 #'(lambda (arg)
+                     (when (typep arg `(integer 0 ,(1- (length choices))))
+                       (return-from one-of (nth arg choices)))))
+    (loop
+      (multiple-value-bind (x args)
+          (readline-read (format nil "~%[DEBUGGER]~%"))
+        (cond ((typep x `(integer 0 ,(1- (length choices))))
+               (return (nth x choices)))
+              ((eq x *eof-value*)
+               (return (find-restart 'restart-toplevel)))
+              (t
+               (let ((result (find-command x)))
+                 (handler-case
+                     (if result
+                         (apply result args)
+                         (eval x))
+                   (error (condition)
+                          (format t "~&~a~%" condition))))))))))
+
+(defun debugger (condition me-or-my-encapsulation)
+  (setq *backtrace-string*
+        (with-output-to-string (out)
+          (uiop/image:print-backtrace
+           :stream out
+           :condition condition)))
+  (format t "~&~a~%" condition)
+  (let* ((restart (one-of (compute-restarts)))
+         (*debugger-hook* me-or-my-encapsulation))
+    (invoke-restart-interactively restart)))
+
 (let (* ** *** - + ++ +++ / // /// values)
   (defun eval-print (-)
     (setq values
-          (multiple-value-list (eval -)))
+          (multiple-value-list
+           (let ((*debugger-hook* #'debugger))
+             (eval -))))
     (setq +++ ++ /// //     *** (car ///)
           ++  +  //  /      **  (car //)
           +   -  /   values *   (car /))
