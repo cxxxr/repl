@@ -3,17 +3,22 @@
 (defvar *eof-value* (gensym "EOF"))
 (defvar *commands* nil)
 
-(defun add-command (names function)
-  (dolist (name names)
-    (push (cons name function)
-          *commands*)))
+(defun add-command (names function docstring)
+  (push (list names function docstring)
+        *commands*))
 
 (defmacro define-command ((name &rest rest-names) parameters &body body)
-  `(add-command (cons ,name ,rest-names)
-                #'(lambda ,parameters ,@body)))
+
+  `(add-command ',(cons name rest-names)
+                #'(lambda ,parameters ,@body)
+                ,(if (and body (stringp (car body)))
+                     (car body)
+                     "")))
 
 (defun find-command (x)
-  (cdr (assoc x *commands*)))
+  (loop :for (names function docstring) :in *commands* :do
+    (when (member x names)
+      (return-from find-command function))))
 
 (defun add-history (str)
   (cffi:foreign-funcall "add_history"
@@ -76,11 +81,13 @@
   (let ((*commands* *commands*))
     (add-command '(:bt :backtrace)
                  #'(lambda ()
-                     (format t "~&~a~%" *backtrace-string*)))
+                     (format t "~&~a~%" *backtrace-string*))
+                 "Print backtrace.")
     (add-command '(:c :cont :continue)
                  #'(lambda (arg)
                      (when (typep arg `(integer 0 ,(1- (length choices))))
-                       (return-from one-of (nth arg choices)))))
+                       (return-from one-of (nth arg choices))))
+                 "Continue execution.")
     (loop
       (multiple-value-bind (x args)
           (readline-read (format nil "~%[DEBUGGER]~%"))
@@ -107,6 +114,10 @@
   (let* ((restart (one-of (compute-restarts)))
          (*debugger-hook* me-or-my-encapsulation))
     (invoke-restart-interactively restart)))
+
+(define-command (:h :help) ()
+  (loop :for (names function docstring) :in *commands* :do
+    (format t "~&~{~s~^ ~}~20,5T ~a~%" names docstring)))
 
 (let (* ** *** - + ++ +++ / // /// values)
   (defun eval-print (-)
