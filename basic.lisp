@@ -1,32 +1,68 @@
 (in-package :repl)
 
-(cffi:defcfun ("rl_newline") :int
-              (count :int)
-              (key :int))
-
-(cffi:defcfun ("rl_forward_char") :int
-              (count :int)
-              (key :int))
-
-(cffi:defcfun ("rl_backward_char") :int
-              (count :int)
-              (key :int))
-
-(cffi:defcfun ("rl_beg_of_line") :int
-              (count :int)
-              (key :int))
-
-(cffi:defcfun ("rl_end_of_line") :int
-              (count :int)
-              (key :int))
-
-(cffi:defcfun ("rl_get_previous_history") :int
-              (count :int)
-              (key :int))
-
-(cffi:defcfun ("rl_get_next_history") :int
-              (count :int)
-              (key :int))
+(macrolet ((def (name)
+                `(cffi:defcfun (,name) :int
+                               (count :int)
+                               (key :int))))
+  (def "rl_abort")
+  (def "rl_newline")
+  (def "rl_arrow_keys")
+  (def "rl_backward_byte")
+  (def "rl_backward_char")
+  (def "rl_rubout")
+  (def "rl_backward_kill_line")
+  (def "rl_backward_kill_word")
+  (def "rl_backward_word")
+  (def "rl_beginning_of_history")
+  (def "rl_beg_of_line")
+  (def "rl_call_last_kbd_macro")
+  (def "rl_capitalize_word")
+  (def "rl_char_search")
+  (def "rl_backward_char_search")
+  (def "rl_clear_screen")
+  (def "rl_complete")
+  (def "rl_copy_backward_word")
+  (def "rl_copy_forward_word")
+  (def "rl_copy_region_to_kill")
+  (def "rl_delete")
+  (def "rl_delete_or_show_completions")
+  (def "rl_delete_horizontal_space")
+  (def "rl_digit_argument")
+  (def "rl_do_lowercase_version")
+  (def "rl_downcase_word")
+  (def "rl_dump_functions")
+  (def "rl_dump_macros")
+  (def "rl_dump_variables")
+  (def "rl_emacs_editing_mode")
+  (def "rl_end_kbd_macro")
+  (def "rl_end_of_history")
+  (def "rl_end_of_line")
+  (def "rl_exchange_point_and_mark")
+  (def "rl_rubout_or_delete")
+  (def "rl_forward_byte")
+  (def "rl_forward_char")
+  (def "rl_forward_search_history")
+  (def "rl_forward_word")
+  (def "rl_history_search_backward")
+  (def "rl_history_search_forward")
+  (def "rl_history_substr_search_backward")
+  (def "rl_history_substr_search_forward")
+  (def "rl_insert_comment")
+  (def "rl_insert_completions")
+  (def "rl_kill_full_line")
+  (def "rl_kill_line")
+  (def "rl_kill_region")
+  (def "rl_kill_word")
+  (def "rl_menu_complete")
+  (def "rl_backward_menu_complete")
+  (def "rl_get_next_history")
+  (def "rl_noninc_forward_search")
+  (def "rl_noninc_reverse_search")
+  (def "rl_noninc_forward_search_again")
+  (def "rl_noninc_reverse_search_again")
+  (def "rl_old_menu_complete")
+  (def "rl_overwrite_mode")
+  (def "rl_kill_text"))
 
 (defvar *editor-column* 0)
 
@@ -155,3 +191,14 @@
   (rl-get-next-history 1 0))
 
 (rl:bind-keyseq "\\en" #'next-history)
+
+(defun kill-line (arg key)
+  (let ((orig-point rl:*point*))
+    (end-of-line 1 0)
+    (if (/= orig-point rl:*point*)
+        (rl-kill-text orig-point rl:*point*)
+        (rl-kill-text orig-point (1+ orig-point)))
+    (setq rl:*point* orig-point)
+    (setq rl:*mark* rl:*point*)))
+
+(rl:bind-keyseq "\\C-k" #'kill-line)
