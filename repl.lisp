@@ -1,24 +1,6 @@
 (in-package :repl)
 
 (defvar *eof-value* (gensym "EOF"))
-(defvar *commands* nil)
-
-(defun add-command (names function docstring)
-  (push (list names function docstring)
-        *commands*))
-
-(defmacro define-command ((name &rest rest-names) parameters &body body)
-
-  `(add-command ',(cons name rest-names)
-                #'(lambda ,parameters ,@body)
-                ,(if (and body (stringp (car body)))
-                     (car body)
-                     "")))
-
-(defun find-command (x)
-  (loop :for (names function docstring) :in *commands* :do
-    (when (member x names)
-      (return-from find-command function))))
 
 (defun add-history (str)
   (cffi:foreign-funcall "add_history"
@@ -114,10 +96,6 @@
   (let* ((restart (one-of (compute-restarts)))
          (*debugger-hook* me-or-my-encapsulation))
     (invoke-restart-interactively restart)))
-
-(define-command (:h :help) ()
-  (loop :for (names function docstring) :in *commands* :do
-    (format t "~&~{~s~^ ~}~20,5T ~a~%" names docstring)))
 
 (let (* ** *** - + ++ +++ / // /// values)
   (defun eval-print (-)

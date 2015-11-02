@@ -15,6 +15,7 @@
                (:file "complete")
                (:file "editor")
                (:file "sexp")
+               (:file "command")
                (:file "repl"))
   :depends-on (:cl-readline
                :shell-command
