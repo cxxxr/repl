@@ -132,11 +132,15 @@
     (terpri))
   (defun repl ()
     (init)
-    (loop
-      (setq - (readline-read
-               (format nil "~&~%[~a]~%"
-                       (package-name *package*))))
+    (loop :with args := nil :do
+      (multiple-value-setq (- args)
+                           (readline-read
+                            (format nil "~&~%[~a]~%"
+                                    (package-name *package*))))
       (when (eq - *eof-value*)
         (return))
-      (restart-case (eval-print -)
-        (restart-toplevel () :report "Restart toplevel.")))))
+      (let ((result (find-command -)))
+        (if result
+            (apply result args)
+            (restart-case (eval-print -)
+              (restart-toplevel () :report "Restart toplevel.")))))))
