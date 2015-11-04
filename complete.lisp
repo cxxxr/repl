@@ -34,6 +34,8 @@
                            els)))))
       (destructuring-bind (symbol-name package external-p)
           (package-prefix text)
+        (when (and package (not (find-package package)))
+          (return-from symbol-complete nil))
         (cond ((and package external-p)
                (do-external-symbols (sym package)
                  (body sym symbol-name
