@@ -80,7 +80,7 @@
        (when (= -1 (decf depth))
          (return (1+ point))))
       ((:string-quote)
-       (setq point (skip-string-forward line-buffer point))))))
+       (setq point (1- (skip-string-forward line-buffer point)))))))
 
 (defun skip-string-forward (line-buffer point)
   (loop
@@ -156,7 +156,7 @@
        (when (= -1 (decf depth))
          (return (1- point))))
       ((:string-quote)
-       (setq point (skip-string-backward line-buffer point))))))
+       (setq point (1+ (skip-string-backward line-buffer point)))))))
 
 (defun skip-string-backward (line-buffer point)
   (loop
