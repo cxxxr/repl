@@ -8,10 +8,11 @@
                         :void))
 
 (defun read-args-from-string (str)
-  (with-input-from-string (in str)
-    (loop :for x := (read in nil *eof-value*)
-      :until (eq x *eof-value*)
-      :collect x)))
+  (ignore-errors
+   (with-input-from-string (in str)
+     (loop :for x := (read in nil *eof-value*)
+       :until (eq x *eof-value*)
+       :collect x))))
 
 (defun readline-read (prompt)
   (let ((string-expr (readline prompt)))
