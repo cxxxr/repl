@@ -2,10 +2,16 @@
 
 (defvar *eof-value* (gensym "EOF"))
 
+(defvar *prev-history* nil)
+
 (defun add-history (str)
-  (cffi:foreign-funcall "add_history"
-                        :string str
-                        :void))
+  (when (or (null *prev-history*)
+            (string/= (string-trim '(#\space #\tab #\newline) *prev-history*)
+                      (string-trim '(#\space #\tab #\newline) str)))
+    (setq *prev-history* str)
+    (cffi:foreign-funcall "add_history"
+                          :string str
+                          :void)))
 
 (defun read-args-from-string (str)
   (ignore-errors
