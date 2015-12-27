@@ -1,5 +1,5 @@
 (defpackage :repl
-  (:use :cl :shell-command)
+  (:use :cl)
   (:export
    :repl
    :define-command))

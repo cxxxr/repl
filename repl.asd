@@ -1,5 +1,3 @@
-(load "shell-command.asd")
-
 #-asdf
 (require :asdf)
 
@@ -18,6 +16,5 @@
                (:file "command")
                (:file "repl"))
   :depends-on (:cl-readline
-               :shell-command
                :cl-fad
                :split-sequence))

@@ -2,14 +2,11 @@
 common lispのrepl
 
 ## 特徴
-readlineを使って式単位の入力履歴やシェルコマンドの呼び出し  
+readlineを使って式単位の入力履歴やシェルコマンドの呼び出し
 シンボルやファイル名の補完
 
 ## 対応している処理系
 sbcl
-
-## インストール
-`make.sh`でshell-command.soを生成した後にasdfでreplをロードする
 
 ## 使い方
 `(repl:repl)`でreplが起動してプロンプトが表示される

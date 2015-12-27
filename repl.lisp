@@ -20,6 +20,8 @@
        :until (eq x *eof-value*)
        :collect x))))
 
+(cffi:defcfun "system" :int (command :string))
+
 (defun readline-read (prompt)
   (let ((string-expr (readline prompt)))
     (if (null string-expr)
@@ -41,7 +43,7 @@
                                                   string-expr)))
                        (if (and (< 0 (length str))
                                 (char= #\! (aref str 0)))
-                           `(shell-command ,(subseq str 1))
+                           `(system ,(subseq str 1))
                            x))))
               x)))))
 
